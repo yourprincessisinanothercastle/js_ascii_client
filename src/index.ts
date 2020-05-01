@@ -11,8 +11,9 @@ function setup() {
         right = k.keyboard("ArrowRight"),
         down = k.keyboard("ArrowDown");
 
-    let game = new Game(document.getElementById('container'), document.getElementById('gui'));
-    game.play()
+    let game = new Game(
+        document.getElementById('container'),
+        document.getElementById('gui'));
 }
 
 
