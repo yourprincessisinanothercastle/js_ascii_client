@@ -1,8 +1,7 @@
 import * as k from './keyboard'
-import * as g from './gameloop'
+import Game from './gameloop'
 
 function gameDiv() {
-    return document.getElementById('container');
 }
 
 function setup() {
@@ -12,7 +11,8 @@ function setup() {
         right = k.keyboard("ArrowRight"),
         down = k.keyboard("ArrowDown");
 
-    g.Game.initialize(gameDiv());
+    let game = new Game(document.getElementById('container'), document.getElementById('gui'));
+    game.play()
 }
 
 
