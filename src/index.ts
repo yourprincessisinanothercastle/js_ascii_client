@@ -6,10 +6,7 @@ function gameDiv() {
 
 function setup() {
     //Capture the keyboard arrow keys
-    let left = k.keyboard("ArrowLeft"),
-        up = k.keyboard("ArrowUp"),
-        right = k.keyboard("ArrowRight"),
-        down = k.keyboard("ArrowDown");
+
 
     let game = new Game(
         document.getElementById('container'),

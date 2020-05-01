@@ -1,6 +1,6 @@
 // https://github.com/axlwaii/GameloopJS/blob/master/src/gameloopjs.core.js
 
-import * as io from 'socket.io-client';
+import * as k from "./keyboard";
 
 (<any>window).requestAnimFrame = (function () {
 
@@ -39,6 +39,32 @@ const TileChars: { [index: string]: string } = {
     'floor': '.'
 }
 
+class Player {
+    char: string
+    x: number
+    y: number
+    hit_points: number
+
+    constructor() {
+        this.char = '@'
+        this.x = 0
+        this.y = 0
+
+        this.hit_points = 100
+    }
+
+    update(packet: any) {
+        [this.x, this.y] = packet['coords']
+        //this.color = packet['color']
+
+        if (packet['hit_points'] < this.hit_points) {
+            //this.sprite.add_current_effect(ms = 100, color = 196)
+            this.hit_points = packet['hit_points']
+        }
+        //this.sprite_state = update_data['sprite_state']
+    }
+}
+
 class Room {
     // tiles[y][x]: tile
     tiles: { [id: string]: { [id: string]: Tile } }
@@ -57,7 +83,6 @@ class Room {
     updateRoom(updateData: Array<any>) {
         console.log('updating room...')
         updateData.forEach((tile: any) => {
-            console.log('tile', tile[0])
             let [x, y] = tile[0]
             let name = tile[1]
             let [seen, is_visible] = tile[2]
@@ -87,6 +112,8 @@ export default class GameLoop {
 
     room: Room
 
+    player: Player
+
     constructor(gameDiv: any, guiDiv: any) {
         this.sizeX = 70
         this.sizeY = 30
@@ -99,15 +126,26 @@ export default class GameLoop {
         this.socket = null
 
         this.init()
+        this.initNetwork()
+        this.initKeys()
 
         this.room = new Room()
+        this.player = new Player()
     }
 
-    init() {
-        this.runs = false;
-        this.gameObjects = [];
+    updateStateFromNetwork(packet: any) {
+        if (packet['data']['map']) {
+            console.log('updating room')
+            this.room.updateRoom(packet['data']['map'])
+        }
+        // todo
+        if (packet['data']['self']) {
+            this.player.update(packet['data']['self'])
+        }
+        //this.otherPlayers
+    }
 
-        this.fps(30);
+    initNetwork() {
         this.socket = new WebSocket("ws://0.0.0.0:8080/connect");
         this.socket.onopen = (event) => {
             //console.log('connected!', event)
@@ -116,23 +154,73 @@ export default class GameLoop {
                 switch (packet.type) {
                     case 'init':
                         console.log('init package!')
-                        this.room.updateRoom(packet['data']['map'])
-
-                        // todo
-                        //this.player.update(packet['data']['self'])
-                        //this.otherPlayers
+                        this.updateStateFromNetwork(packet)
                         this.start()
                         break;
                     case 'update':
+                        this.updateStateFromNetwork(packet)
+                        break;
+
+                    case 'remove_players':
+                        break;
+                    case 'remove_entities':
+                        // todo: rename on server
                         break;
                     default:
                         console.log('unknown package ', packet)
                 }
 
             }
+        }
+    }
+
+    send(type: string, data: any) {
+        if (this.socket) {
+            this.socket.send(JSON.stringify({type: type, data: data}))
+        }
+    }
+
+    initKeys() {
+        let left = k.keyboard("a"),
+            up = k.keyboard("w"),
+            right = k.keyboard("d"),
+            down = k.keyboard("s");
+
+        left.press = () => {
+            this.send('actions', {'left': 'press'})
+        };
+        left.release = () => {
+            this.send('actions', {'left': 'release'})
         };
 
+        up.press = () => {
+            this.send('actions', {'up': 'press'})
+        };
+        up.release = () => {
+            this.send('actions', {'up': 'release'})
+        };
+
+        right.press = () => {
+            this.send('actions', {'right': 'press'})
+        };
+        right.release = () => {
+            this.send('actions', {'right': 'release'})
+        };
+
+        down.press = () => {
+            this.send('actions', {'down': 'press'})
+        };
+        down.release = () => {
+            this.send('actions', {'down': 'release'})
+        };
     }
+
+    init() {
+        this.runs = false;
+        this.gameObjects = [];
+        this.fps(30);
+
+    };
 
 
     /* @desc getter and setter for fps
@@ -181,13 +269,15 @@ export default class GameLoop {
     deltaTime() {
         return 0.1 * Date.now() - this.lastTick;
     }
+    
+    private drawPlayer(){
+        // todo
+        this.drawWithPlayerOffset(this.player.char, this.player.x, this.player.y)
+    }
 
     private drawWithPlayerOffset(char: string, x: number, y: number) {
-        let playerx = 5
-        let playery = 5
-
-        let centre_x = (this.sizeX / 2) - playerx
-        let centre_y = (this.sizeY / 2) - playery
+        let centre_x = (this.sizeX / 2) - this.player.x
+        let centre_y = (this.sizeY / 2) - this.player.y
 
         let absoluteX = centre_x + x
         let absoluteY = centre_y + y
@@ -195,18 +285,12 @@ export default class GameLoop {
             && absoluteY > 0 && absoluteY < this.sizeY) {
             this.lines[absoluteY][absoluteX] = char
         }
-
     }
-
-    drawTile() {
-
-    }
-
 
     drawRoom() {
         Object.entries(this.room.tiles).forEach(([yIndex, row]) => {
                 Object.entries(row).forEach(([xIndex, tile]) => {
-                    this.lines[parseInt(yIndex)][parseInt(xIndex)] = TileChars[tile.name]
+                    this.drawWithPlayerOffset(TileChars[tile.name], parseInt(xIndex), parseInt(yIndex))
                 })
             }
         );
@@ -217,6 +301,7 @@ export default class GameLoop {
         this.clearLines()
 
         this.drawRoom()
+        this.drawPlayer()
 
         const linesToDraw: Array<string> = []
         this.lines.forEach(line => {
