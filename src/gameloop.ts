@@ -1,6 +1,8 @@
 // https://github.com/axlwaii/GameloopJS/blob/master/src/gameloopjs.core.js
 
 import * as k from "./keyboard";
+import {Room} from "./room";
+import {Player} from "./entities/player";
 
 (<any>window).requestAnimFrame = (function () {
 
@@ -21,75 +23,6 @@ import * as k from "./keyboard";
     );
 
 }());
-
-class Tile {
-    name: string
-    seen: boolean
-    is_visible: boolean
-
-    constructor(name: string, seen: boolean, is_visible: boolean) {
-        this.name = name
-        this.seen = seen
-        this.is_visible = is_visible
-    }
-}
-
-const TileChars: { [index: string]: string } = {
-    'wall': '#',
-    'floor': '.'
-}
-
-class Player {
-    char: string
-    x: number
-    y: number
-    hit_points: number
-
-    constructor() {
-        this.char = '@'
-        this.x = 0
-        this.y = 0
-
-        this.hit_points = 100
-    }
-
-    update(packet: any) {
-        [this.x, this.y] = packet['coords']
-        //this.color = packet['color']
-
-        if (packet['hit_points'] < this.hit_points) {
-            //this.sprite.add_current_effect(ms = 100, color = 196)
-            this.hit_points = packet['hit_points']
-        }
-        //this.sprite_state = update_data['sprite_state']
-    }
-}
-
-class Room {
-    // tiles[y][x]: tile
-    tiles: { [id: string]: { [id: string]: Tile } }
-
-    constructor() {
-        this.tiles = {}
-    }
-
-    setTile(x: number, y: number, name: string, seen: boolean, is_visible: boolean) {
-        if (!this.tiles[y]) {
-            this.tiles[y] = {}
-        }
-        this.tiles[y][x] = new Tile(name, seen, is_visible)
-    }
-
-    updateRoom(updateData: Array<any>) {
-        console.log('updating room...')
-        updateData.forEach((tile: any) => {
-            let [x, y] = tile[0]
-            let name = tile[1]
-            let [seen, is_visible] = tile[2]
-            this.setTile(x, y, name, seen, is_visible)
-        })
-    }
-}
 
 
 export default class GameLoop {
@@ -113,6 +46,7 @@ export default class GameLoop {
     room: Room
 
     player: Player
+    otherPlayers: Array<Player>
 
     constructor(gameDiv: any, guiDiv: any) {
         this.sizeX = 70
@@ -123,19 +57,20 @@ export default class GameLoop {
 
         this.lines = []
 
+        this.room = new Room()
+        this.player = new Player()
+        this.otherPlayers = []
+
         this.socket = null
 
         this.init()
         this.initNetwork()
         this.initKeys()
 
-        this.room = new Room()
-        this.player = new Player()
     }
 
     updateStateFromNetwork(packet: any) {
         if (packet['data']['map']) {
-            console.log('updating room')
             this.room.updateRoom(packet['data']['map'])
         }
         // todo
@@ -251,7 +186,7 @@ export default class GameLoop {
         for (let y = 0; y < this.sizeY; y++) {
             const line = []
             for (let x = 0; x < this.sizeX; x++) {
-                line.push('-')
+                line.push(' ')
             }
             this.lines.push(line)
         }
@@ -269,8 +204,9 @@ export default class GameLoop {
     deltaTime() {
         return 0.1 * Date.now() - this.lastTick;
     }
-    
-    private drawPlayer(){
+
+
+    private drawPlayer() {
         // todo
         this.drawWithPlayerOffset(this.player.char, this.player.x, this.player.y)
     }
@@ -290,22 +226,27 @@ export default class GameLoop {
     drawRoom() {
         Object.entries(this.room.tiles).forEach(([yIndex, row]) => {
                 Object.entries(row).forEach(([xIndex, tile]) => {
-                    this.drawWithPlayerOffset(TileChars[tile.name], parseInt(xIndex), parseInt(yIndex))
+                    this.drawWithPlayerOffset(tile.char, parseInt(xIndex), parseInt(yIndex))
                 })
             }
         );
     }
 
+    drawEntities() {
+
+    }
 
     render() {
         this.clearLines()
 
         this.drawRoom()
         this.drawPlayer()
+        this.drawEntities()
 
         const linesToDraw: Array<string> = []
         this.lines.forEach(line => {
             linesToDraw.push(line.join(''))
+
         })
         this.gameDiv.innerHTML = linesToDraw.join('\n')
 
@@ -319,8 +260,6 @@ export default class GameLoop {
     }
 
     update() {
-        // network?
-
         this.render();
     }
 
