@@ -3,6 +3,7 @@
 import * as k from "./keyboard";
 import {Room} from "./room";
 import {Player} from "./entities/player";
+import {Entity} from "./entities/entity";
 
 (<any>window).requestAnimFrame = (function () {
 
@@ -202,13 +203,20 @@ export default class GameLoop {
     };
 
     deltaTime() {
-        return 0.1 * Date.now() - this.lastTick;
+        return 0.001 * (Date.now() - this.lastTick);
     }
 
 
-    private drawPlayer() {
-        // todo
-        this.drawWithPlayerOffset(this.player.char, this.player.x, this.player.y)
+    private drawEntity(entity: Entity) {
+        let cells = entity.sprite.getCells()
+
+        Object.entries(cells).forEach(([yIndex, row]) => {
+            Object.entries(row).forEach(([xIndex, char]) => {
+                if(char) {
+                    this.drawWithPlayerOffset(char, entity.x + parseInt(xIndex), entity.y + parseInt(yIndex))
+                }
+            })
+        })
     }
 
     private drawWithPlayerOffset(char: string, x: number, y: number) {
@@ -240,13 +248,12 @@ export default class GameLoop {
         this.clearLines()
 
         this.drawRoom()
-        this.drawPlayer()
+        this.drawEntity(this.player)
         this.drawEntities()
 
         const linesToDraw: Array<string> = []
         this.lines.forEach(line => {
             linesToDraw.push(line.join(''))
-
         })
         this.gameDiv.innerHTML = linesToDraw.join('\n')
 
@@ -261,6 +268,7 @@ export default class GameLoop {
 
     update() {
         this.render();
+        this.player.tickSpriteState(this.deltaTime())
     }
 
 
