@@ -10,6 +10,8 @@ export class Entity {
     
     spriteState: string
     direction: string
+    
+    elementClass: string
 
     constructor() {
         this.x = 0

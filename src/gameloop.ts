@@ -67,7 +67,6 @@ export default class GameLoop {
         this.init()
         this.initNetwork()
         this.initKeys()
-
     }
 
     updateStateFromNetwork(packet: any) {
@@ -187,14 +186,14 @@ export default class GameLoop {
         for (let y = 0; y < this.sizeY; y++) {
             const line = []
             for (let x = 0; x < this.sizeX; x++) {
-                line.push(' ')
+                let s = `<span class="empty"> </span>`
+                line.push(s)
             }
             this.lines.push(line)
         }
     }
 
     stop() {
-
         this.runs = false;
         this.stopTime = Date.now();
 
@@ -212,14 +211,14 @@ export default class GameLoop {
 
         Object.entries(cells).forEach(([yIndex, row]) => {
             Object.entries(row).forEach(([xIndex, char]) => {
-                if(char) {
-                    this.drawWithPlayerOffset(char, entity.x + parseInt(xIndex), entity.y + parseInt(yIndex))
+                if (char) {
+                    this.drawWithPlayerOffset(char, entity.elementClass, entity.x + parseInt(xIndex), entity.y + parseInt(yIndex))
                 }
             })
         })
     }
 
-    private drawWithPlayerOffset(char: string, x: number, y: number) {
+    private drawWithPlayerOffset(char: string, elementClass: string, x: number, y: number) {
         let centre_x = (this.sizeX / 2) - this.player.x
         let centre_y = (this.sizeY / 2) - this.player.y
 
@@ -227,14 +226,14 @@ export default class GameLoop {
         let absoluteY = centre_y + y
         if (absoluteX > 0 && absoluteX < this.sizeX
             && absoluteY > 0 && absoluteY < this.sizeY) {
-            this.lines[absoluteY][absoluteX] = char
+            this.lines[absoluteY][absoluteX] = `<span class="${elementClass}">${char}</span>`
         }
     }
 
     drawRoom() {
         Object.entries(this.room.tiles).forEach(([yIndex, row]) => {
                 Object.entries(row).forEach(([xIndex, tile]) => {
-                    this.drawWithPlayerOffset(tile.char, parseInt(xIndex), parseInt(yIndex))
+                    this.drawWithPlayerOffset(tile.char, 'floor', parseInt(xIndex), parseInt(yIndex))
                 })
             }
         );
@@ -275,16 +274,22 @@ export default class GameLoop {
     play() {
         let self = this
         let nextTimeout = function () {
-            setTimeout(() => {
-                (<any>window).requestAnimFrame(nextTimeout);
-            }, 1000 / self.currentFps);
+            try {
+                setTimeout(() => {
+                    (<any>window).requestAnimFrame(nextTimeout);
+                }, 1000 / self.currentFps);
 
-            self.update();
-            self.lastTick = Date.now();
+                self.update();
+                self.lastTick = Date.now();
 
-            if (!self.runs) {
-                return false;
+                if (!self.runs) {
+                    return false;
+                }
+            } catch (e) {
+                console.error(e)
+                self.stop()
             }
+
         }
         nextTimeout()
     }

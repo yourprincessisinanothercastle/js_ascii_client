@@ -11,6 +11,8 @@ export class Player extends Entity {
     constructor() {
         super();
 
+        this.elementClass = 'player'
+
         this.hit_points = 100
         this.sprite = new Sprite(player_sprite)
     }

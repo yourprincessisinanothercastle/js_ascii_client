@@ -33,6 +33,10 @@ body {
 
 #container {
 	width: fit-content;
+	display: inline-block;
+	border-color: black;
+	border-width: 2px;
+	border-style: dashed;
 }
 
 span[data-isFloor="true"] {
