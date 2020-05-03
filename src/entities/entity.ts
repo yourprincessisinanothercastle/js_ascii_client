@@ -13,6 +13,8 @@ export class Entity {
     
     elementClass: string
 
+    hitPoints: number
+
     constructor() {
         this.x = 0
         this.y = 0

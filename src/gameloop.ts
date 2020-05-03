@@ -4,6 +4,7 @@ import * as k from "./keyboard";
 import {Room} from "./room";
 import {Player} from "./entities/player";
 import {Entity} from "./entities/entity";
+import {entityClasses} from "./entities/typeLookup";
 
 (<any>window).requestAnimFrame = (function () {
 
@@ -47,7 +48,8 @@ export default class GameLoop {
     room: Room
 
     player: Player
-    otherPlayers: Array<Player>
+    otherPlayers: { [uid: string]: Player }
+    entities: { [uid: string]: Entity }
 
     constructor(gameDiv: any, guiDiv: any) {
         this.sizeX = 70
@@ -60,7 +62,8 @@ export default class GameLoop {
 
         this.room = new Room()
         this.player = new Player()
-        this.otherPlayers = []
+        this.otherPlayers = {}
+        this.entities = {}
 
         this.socket = null
 
@@ -73,11 +76,28 @@ export default class GameLoop {
         if (packet['data']['map']) {
             this.room.updateRoom(packet['data']['map'])
         }
-        // todo
+
         if (packet['data']['self']) {
             this.player.update(packet['data']['self'])
         }
-        //this.otherPlayers
+        if (packet['data']['players']) {
+            Object.entries(packet['data']['players']).forEach(([uid, playerData]) => {
+                if (!this.otherPlayers[uid]) {
+                    this.otherPlayers[uid] = new Player()
+                }
+                this.otherPlayers[uid].update(playerData)
+            })
+        }
+        if (packet['data']['entities']) {
+            Object.entries(packet['data']['entities']).forEach(([uid, entityData]) => {
+
+                if (!this.entities[uid]) {
+                    let entityClass = (<any>entityData)['type']
+                    this.entities[uid] = new entityClasses[entityClass]()
+                }
+                this.entities[uid].update(entityData)
+            })
+        }
     }
 
     initNetwork() {
@@ -97,9 +117,14 @@ export default class GameLoop {
                         break;
 
                     case 'remove_players':
+                        packet['data'].forEach((uid: string) => {
+                            delete this.otherPlayers[uid]
+                        })
                         break;
                     case 'remove_entities':
-                        // todo: rename on server
+                        packet['data'].forEach((uid: string) => {
+                            delete this.entities[uid]
+                        })
                         break;
                     default:
                         console.log('unknown package ', packet)
@@ -233,22 +258,28 @@ export default class GameLoop {
     drawRoom() {
         Object.entries(this.room.tiles).forEach(([yIndex, row]) => {
                 Object.entries(row).forEach(([xIndex, tile]) => {
-                    this.drawWithPlayerOffset(tile.char, 'floor', parseInt(xIndex), parseInt(yIndex))
+                    let elementClass = tile.name
+                    if (!tile.is_visible) {
+                        elementClass += ' mapNotVisible'
+                    }
+                    this.drawWithPlayerOffset(tile.char, elementClass, parseInt(xIndex), parseInt(yIndex))
                 })
             }
         );
     }
 
-    drawEntities() {
-
-    }
 
     render() {
         this.clearLines()
 
         this.drawRoom()
         this.drawEntity(this.player)
-        this.drawEntities()
+        Object.entries(this.otherPlayers).forEach(([uid, otherPlayer]) => {
+            this.drawEntity(otherPlayer)
+        })
+        Object.entries(this.entities).forEach(([uid, entity]) => {
+            this.drawEntity(entity)
+        })
 
         const linesToDraw: Array<string> = []
         this.lines.forEach(line => {
@@ -267,7 +298,18 @@ export default class GameLoop {
 
     update() {
         this.render();
-        this.player.tickSpriteState(this.deltaTime())
+
+        const dt = this.deltaTime()
+
+        this.player.tickSpriteState(dt)
+
+        Object.entries(this.otherPlayers).forEach(([uid, otherPlayer]) => {
+            otherPlayer.tickSpriteState(dt)
+        })
+
+        Object.entries(this.entities).forEach(([uid, entity]) => {
+            entity.tickSpriteState(dt)
+        })
     }
 
 
@@ -286,7 +328,7 @@ export default class GameLoop {
                     return false;
                 }
             } catch (e) {
-                console.error(e)
+                console.error(e.stack)
                 self.stop()
             }
 

@@ -1,6 +1,5 @@
 
 .floor {
-    background-color: #404040;
     color: #d9d9d9;
 }
 
@@ -11,4 +10,8 @@
 
 .empty {
  color: red;
+}
+
+.mapNotVisible {
+    color: darkmagenta;
 }

@@ -56,6 +56,7 @@ export class Sprite {
     constructor(spriteData: any) {
         this.states = {}
         this.load(spriteData)
+        console.log('sprite states', this.states)
         this.currentState = 'idle'
         this.currentDirection = 'right'
         this.currentFrame = this.getCurrentStateFrames()[0].makeCurrentFrame()
