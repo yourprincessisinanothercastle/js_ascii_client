@@ -101,8 +101,8 @@ export default class GameLoop {
     }
 
     initNetwork() {
-        //this.socket = new WebSocket("ws://localhost:8080/connect");
-        this.socket = new WebSocket("wss://ascii.kwoh.de/connect");
+        this.socket = new WebSocket(process.env.DEFAULT_HOST || "connect");
+        //this.socket = new WebSocket("wss://ascii.kwoh.de/connect");
         this.socket.onopen = (event) => {
             //console.log('connected!', event)
             this.socket.onmessage = (event) => {

@@ -5,16 +5,16 @@ const merge = require('webpack-merge');
 const baseConfig = require('./webpack.base.config.js');
 
 module.exports = merge(baseConfig, {
-    plugins: [
+      plugins: [
+        new CopyPlugin([
+            {from: 'static', to: 'static'},
+            {from: 'index.html', to: 'index.html'}
+        ],),
         new Dotenv({
-            path: './.env',
+            path: './.env.prod',
             silent: false
         })
     ],
-    devServer: {
-        contentBase: path.join(__dirname, 'dist'),
-        compress: true,
-        port: 9000
-    }
 });
+
 
