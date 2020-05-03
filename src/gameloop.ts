@@ -101,7 +101,8 @@ export default class GameLoop {
     }
 
     initNetwork() {
-        this.socket = new WebSocket("ws://0.0.0.0:8080/connect");
+        //this.socket = new WebSocket("ws://localhost:8080/connect");
+        this.socket = new WebSocket("wss://ascii.kwoh.de/connect");
         this.socket.onopen = (event) => {
             //console.log('connected!', event)
             this.socket.onmessage = (event) => {
@@ -211,8 +212,7 @@ export default class GameLoop {
         for (let y = 0; y < this.sizeY; y++) {
             const line = []
             for (let x = 0; x < this.sizeX; x++) {
-                let s = `<span class="empty"> </span>`
-                line.push(s)
+                line.push(' ')
             }
             this.lines.push(line)
         }
@@ -251,16 +251,21 @@ export default class GameLoop {
         let absoluteY = centre_y + y
         if (absoluteX > 0 && absoluteX < this.sizeX
             && absoluteY > 0 && absoluteY < this.sizeY) {
-            this.lines[absoluteY][absoluteX] = `<span class="${elementClass}">${char}</span>`
+            if (!elementClass) {
+                this.lines[absoluteY][absoluteX] = char
+            } else {
+                this.lines[absoluteY][absoluteX] = `<span class="${elementClass}">${char}</span>`
+            }
+
         }
     }
 
     drawRoom() {
         Object.entries(this.room.tiles).forEach(([yIndex, row]) => {
                 Object.entries(row).forEach(([xIndex, tile]) => {
-                    let elementClass = tile.name
+                    let elementClass = null
                     if (!tile.is_visible) {
-                        elementClass += ' mapNotVisible'
+                        elementClass = 'mapNotVisible'
                     }
                     this.drawWithPlayerOffset(tile.char, elementClass, parseInt(xIndex), parseInt(yIndex))
                 })
@@ -308,7 +313,9 @@ export default class GameLoop {
         })
 
         Object.entries(this.entities).forEach(([uid, entity]) => {
-            entity.tickSpriteState(dt)
+            if (entity.isVisible) {
+                entity.tickSpriteState(dt)
+            }
         })
     }
 

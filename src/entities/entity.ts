@@ -14,6 +14,8 @@ export class Entity {
     elementClass: string
 
     hitPoints: number
+    
+    isVisible: boolean
 
     constructor() {
         this.x = 0
@@ -31,6 +33,7 @@ export class Entity {
         [this.x, this.y] = packet['coords']
         this.spriteState = packet['sprite_state']
         this.direction = packet['direction']
+        this.isVisible = packet['is_visible']
         //this.color = packet['color']
         //this.sprite_state = update_data['sprite_state']
     }
