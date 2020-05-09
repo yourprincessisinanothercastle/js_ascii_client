@@ -1,0 +1,31 @@
+idle: &idle
+  right:
+    - ms: 500
+      cells:
+        - ["X", "X",  "X" ]
+        - ["X", "X",  "X" ]
+        - ["X", "X",  "X" ]
+
+  left:
+    - ms: 500
+      cells:
+        - ["X", "X",  "X" ]
+        - ["X", "X",  "X" ]
+        - ["X", "X",  "X" ]
+
+move: *idle
+cooldown: *idle
+attack:
+  right:
+    - ms: 500
+      cells:
+        - ["X", "X",  "X" ]
+        - ["X", "X",  "X" ]
+        - ["X", "X",  "X" ]
+
+  left:
+    - ms: 500
+      cells:
+        - ["X", "X",  "X" ]
+        - ["X", "X",  "X" ]
+        - ["X", "X",  "X" ]

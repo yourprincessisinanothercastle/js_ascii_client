@@ -83,6 +83,7 @@ export default class GameLoop {
         if (packet['data']['players']) {
             Object.entries(packet['data']['players']).forEach(([uid, playerData]) => {
                 if (!this.otherPlayers[uid]) {
+                    console.log('adding player')
                     this.otherPlayers[uid] = new Player()
                 }
                 this.otherPlayers[uid].update(playerData)
@@ -92,7 +93,10 @@ export default class GameLoop {
             Object.entries(packet['data']['entities']).forEach(([uid, entityData]) => {
 
                 if (!this.entities[uid]) {
-                    let entityClass = (<any>entityData)['type']
+                    let entityClass = (<any>entityData)['sprite_name']
+                    if(!entityClasses[entityClass]) {
+                        entityClass = 'not_implemented'
+                    }
                     this.entities[uid] = new entityClasses[entityClass]()
                 }
                 this.entities[uid].update(entityData)
@@ -145,7 +149,8 @@ export default class GameLoop {
         let left = k.keyboard("a"),
             up = k.keyboard("w"),
             right = k.keyboard("d"),
-            down = k.keyboard("s");
+            down = k.keyboard("s"),
+            attack = k.keyboard("i");
 
         left.press = () => {
             this.send('actions', {'left': 'press'})
@@ -173,6 +178,13 @@ export default class GameLoop {
         };
         down.release = () => {
             this.send('actions', {'down': 'release'})
+        };
+
+        attack.press = () => {
+            this.send('actions', {'attack': 'press'})
+        };
+        attack.release = () => {
+            this.send('actions', {'attack': 'release'})
         };
     }
 
