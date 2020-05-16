@@ -60,10 +60,7 @@ export default class GameLoop {
 
         this.lines = []
 
-        this.room = new Room()
-        this.player = new Player()
-        this.otherPlayers = {}
-        this.entities = {}
+        this.resetState()
 
         this.socket = null
 
@@ -103,6 +100,14 @@ export default class GameLoop {
             })
         }
     }
+    
+    resetState() {
+        this.room = new Room()
+        this.player = new Player()
+        this.otherPlayers = {}
+        this.entities = {}
+    }
+
 
     initNetwork() {
         this.socket = new WebSocket(process.env.DEFAULT_HOST || "connect");
@@ -114,8 +119,12 @@ export default class GameLoop {
                 switch (packet.type) {
                     case 'init':
                         console.log('init package!')
+                        this.resetState()
                         this.updateStateFromNetwork(packet)
-                        this.start()
+
+                        if(!this.runs) {
+                            this.start()
+                        }
                         break;
                     case 'update':
                         this.updateStateFromNetwork(packet)
