@@ -15,3 +15,7 @@
 .mapNotVisible {
     color: darkmagenta;
 }
+
+.targetTile {
+    color: cyan;
+}

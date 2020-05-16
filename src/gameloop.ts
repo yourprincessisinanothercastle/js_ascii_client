@@ -150,7 +150,9 @@ export default class GameLoop {
             up = k.keyboard("w"),
             right = k.keyboard("d"),
             down = k.keyboard("s"),
-            attack = k.keyboard("i");
+            
+            attack = k.keyboard("i"),
+            interact = k.keyboard("e");
 
         left.press = () => {
             this.send('actions', {'left': 'press'})
@@ -185,6 +187,13 @@ export default class GameLoop {
         };
         attack.release = () => {
             this.send('actions', {'attack': 'release'})
+        };
+
+        interact.press = () => {
+            this.send('actions', {'interact': 'press'})
+        };
+        interact.release = () => {
+            this.send('actions', {'interact': 'release'})
         };
     }
 
@@ -278,6 +287,9 @@ export default class GameLoop {
                     let elementClass = null
                     if (!tile.is_visible) {
                         elementClass = 'mapNotVisible'
+                    }
+                    if (tile.is_target) {
+                        elementClass = 'targetTile'
                     }
                     this.drawWithPlayerOffset(tile.char, elementClass, parseInt(xIndex), parseInt(yIndex))
                 })
